@@ -2,45 +2,71 @@
 % Please edit documentation in R/methods.R
 \name{coef.cv.rbridge}
 \alias{coef.cv.rbridge}
-\title{Extract coefficients from a 'cv.rbridge' object}
+\title{Extract coefficients from a fitted cv.rbridge object}
 \usage{
 \method{coef}{cv.rbridge}(object, s = c("lambda.1se", "lambda.min"), ...)
 }
 \arguments{
-\item{object}{A 'cv.rbridge' object.}
+\item{object}{Fitted object returned by \code{\link{cv.rbridge}}, with \code{p} predictors in its training design.}
 
-\item{s}{Value(s) of the penalty parameter lambda at which predictions are required.}
+\item{s}{Penalty selection, using numeric fitted values or a character name.
+Numeric values must match \code{object$lambda} exactly; no interpolation is used.
+The character selectors are:
+\describe{
+\item{\code{"lambda.min"}}{Select the penalty with minimum CV error.}
+\item{\code{"lambda.1se"}}{Select using the historical CV error bars.}
+}
+The default is \code{lambda.1se}.}
 
-\item{...}{Additional arguments for compatibility.}
+\item{...}{Additional arguments accepted for compatibility.}
 }
 \value{
-A vector of coefficients
+Numeric matrix with \code{p + 1} rows and one column per
+selected penalty, even when only one penalty is selected. The first row
+is \code{(Intercept)}; subsequent rows are original-scale slopes in the
+training predictor order.
 }
 \description{
-Extract coefficients from a 'cv.rbridge' object.
+Extract original-scale intercept and slope coefficients from a fitted
+cross-validated cv.rbridge object.
+}
+\details{
+The returned matrix retains its dimensions for a single selected penalty.
+The defaults differ between \code{coef()} and \code{predict()}:
+coefficient extraction uses \code{lambda.1se}, whereas response prediction
+uses \code{lambda.min}. Specify the same \code{s} in both calls when comparing
+coefficients and their predictions.
+Returned slopes are on the original predictor scale; the linear
+restrictions concern standardized slopes. See \code{\link{rbridge}} for
+converting scales before checking restriction residuals.
 }
 \examples{
-set.seed(2019) 
+# Reproducible synthetic demonstration: 100 observations, eight predictors.
+set.seed(2019)
 beta <- c(3, 1.5, 0, 0, 2, 0, 0, 0)
 p <- length(beta)
 beta <- matrix(beta, nrow = p, ncol = 1)
+n <- 100
+X <- matrix(rnorm(n * p), nrow = n, ncol = p)
+y <- as.numeric(X \%*\% beta + rnorm(n))
+# A user-specified sum of standardized slopes: b[1] + b[2] + b[5] = 6.5.
+# This target is illustrative; it is not asserted to equal the generating sum.
+R1.mat <- matrix(c(1, 1, 0, 0, 1, 0, 0, 0), nrow = 1)
+r1.vec <- matrix(6.5, nrow = 1, ncol = 1)
 
-### Restricted Matrix and vector
-c1 <- c(1,1,0,0,1,0,0,0)
-R1.mat <- matrix(c1,nrow = 1, ncol = p)
-r1.vec <- as.matrix(c(6.5),1,1)
-
-n = 100
-X = matrix(rnorm(n*p),n,p)
-y = X\%*\%beta + rnorm(n) 
-
-######## Model 1 based on first restrictions
-model1 <- cv.rbridge(X, y, q = 1, R1.mat, r1.vec)
-coef(model1,s='lambda.min')
+# Five penalties keep this help example fast; the default is 100.
+model1 <- cv.rbridge(X, y, q = 1, R = R1.mat, r = r1.vec, nlambda = 5,
+                     nfolds = 3, num_threads = 1)
+# A single selected penalty still gives a coefficient matrix.
+coefficients <- coef(model1, s = "lambda.min")
+coefficients
+dim(coefficients)
+# The default uses the historical error-bar selector.
+coef(model1)
 }
 \seealso{
-\code{\link{predict.cv.rbridge}}
+\code{\link{predict.cv.rbridge}}, \code{\link{cv.rbridge}}
 }
 \author{
-Bahadir Yuzbasi, Mohammad Arashi and Fikri Akdeniz \cr Maintainer: Bahadir Yuzbasi \email{b.yzb@hotmail.com}
+Bahadir Yuzbasi \cr Maintainer: Bahadir Yuzbasi \email{b.yzb@hotmail.com}
 }

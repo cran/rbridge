@@ -2,20 +2,61 @@
 % Please edit documentation in R/methods.R
 \name{plot.cv.rbridge}
 \alias{plot.cv.rbridge}
-\title{Plot a 'cv.rbridge' object function}
+\title{Plot the restricted bridge cross-validation curve}
 \usage{
 \method{plot}{cv.rbridge}(x, sign.lambda = 1, ...)
 }
 \arguments{
-\item{x}{Design matrix.}
+\item{x}{Fitted CV object returned by \code{\link{cv.rbridge}}.}
 
-\item{sign.lambda}{Either plot against \code{log(lambda)} (default) or its negative if sign.\code{lambda=-1}.}
+\item{sign.lambda}{Horizontal-axis direction. The default \code{1}
+plots \code{log(lambda)}; \code{-1} reverses it using \code{-log(lambda)}.
+Use positive fitted penalties for the logarithmic axis.}
 
-\item{...}{Other graphical parameters to plot}
+\item{...}{Graphical arguments passed to the initial base-R \code{plot()}
+call, such as \code{main}, \code{xlab}, \code{ylab} or \code{ylim}.}
+}
+\value{
+Draws the plot and returns \code{NULL} invisibly.
 }
 \description{
-Plots the cross-validation curve, and upper and lower standard deviation curves, as a function of the lambda values used.
+Display validation mean squared error over the fitted penalty grid,
+with historical error bars, counts of nonzero slopes and both selected penalties.
+}
+\details{
+Points show \code{x$cve}; bars span \code{x$cvlo} to \code{x$cvup}.
+The bars use the historical \code{cvse} calculation described in
+\code{\link{cv.rbridge}}, rather than conventional foldwise standard errors.
+The top axis shows full-data nonzero-slope counts, excluding the intercept.
+Vertical dotted lines mark \code{lambda.min} and \code{lambda.1se};
+the lines coincide when both selectors choose the same fitted penalty.
+The curve is a diagnostic for the supplied grid and folds; its shape
+depends on the data and need not be U-shaped.
+}
+\examples{
+# Reproducible synthetic demonstration: 100 observations, eight predictors.
+set.seed(2019)
+beta <- c(3, 1.5, 0, 0, 2, 0, 0, 0)
+p <- length(beta)
+beta <- matrix(beta, nrow = p, ncol = 1)
+n <- 100
+X <- matrix(rnorm(n * p), nrow = n, ncol = p)
+y <- as.numeric(X \%*\% beta + rnorm(n))
+# A user-specified sum of standardized slopes: b[1] + b[2] + b[5] = 6.5.
+# This target is illustrative; it is not asserted to equal the generating sum.
+R1.mat <- matrix(c(1, 1, 0, 0, 1, 0, 0, 0), nrow = 1)
+r1.vec <- matrix(6.5, nrow = 1, ncol = 1)
+
+# Five penalties keep this help example fast; the default is 100.
+model1 <- cv.rbridge(X, y, q = 1, R = R1.mat, r = r1.vec, nlambda = 5,
+                     nfolds = 3, num_threads = 1)
+plot(model1, main = "Cross-validation over the fitted penalty grid")
+# Reverse the log-penalty axis without refitting the model.
+plot(model1, sign.lambda = -1)
+}
+\seealso{
+\code{\link{cv.rbridge}}, \code{\link{coef.cv.rbridge}}
 }
 \author{
-Bahadir Yuzbasi, Mohammad Arashi and Fikri Akdeniz \cr Maintainer: Bahadir Yuzbasi \email{b.yzb@hotmail.com}
+Bahadir Yuzbasi \cr Maintainer: Bahadir Yuzbasi \email{b.yzb@hotmail.com}
 }

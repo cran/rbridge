@@ -2,79 +2,144 @@
 % Please edit documentation in R/cv.bridge.R
 \name{cv.bridge}
 \alias{cv.bridge}
-\title{Cross-validation for bridge}
+\title{Cross-validation for bridge regression}
 \usage{
-cv.bridge(X, y, q, lambda, nfolds = 10, lambda.min = ifelse(n > p,
-  0.001, 0.05), nlambda = 100, eta = 1e-07, converge = 10^10,
-  num_threads = 10)
+cv.bridge(
+  X,
+  y,
+  q,
+  lambda,
+  nfolds = 10,
+  lambda.min = ifelse(n > p, 0.001, 0.05),
+  nlambda = 100,
+  eta = 1e-07,
+  converge = 10^10,
+  num_threads = 10
+)
 }
 \arguments{
-\item{X}{\code{X} matrix as in bridge.}
+\item{X}{Numeric design matrix with \code{n} observation rows and \code{p}
+predictor columns. Supply finite values and predictors with nonzero variation;
+omit an intercept column. A data frame is converted using \code{model.matrix(~0+., X)};
+restrictions and future predictions must use the resulting predictor order.}
 
-\item{y}{response \code{y} as in bridge.}
+\item{y}{Numeric response vector of length \code{n}, containing finite values.}
 
-\item{q}{is the degree of norm which includes ridge regression with \code{q=2} and lasso estimates with \code{q=1} as special cases}
+\item{q}{Bridge-penalty exponent, a finite number in \code{(0, 2]}.
+Values 1 and 2 specify the L1 and L2 penalty forms. Estimation uses local
+quadratic approximation (LQA).}
 
-\item{lambda}{lambda sequence; default is NULL. It is given by user or \code{cv.rbridge} chooses its own sequence.}
+\item{lambda}{Optional nonempty numeric vector of finite, nonnegative penalty
+values. Its order is retained. When supplied, it determines the fitted path
+and overrides \code{nlambda} and the grid argument \code{lambda.min}.}
 
-\item{nfolds}{number of folds - default is 10.}
+\item{nfolds}{Number of validation folds, an integer between 2 and
+\code{n}. The default is \code{10}.}
 
-\item{lambda.min}{The smallest value for lambda if \code{n>p} is \code{0.001} and \code{0.05} otherwise.}
+\item{lambda.min}{Positive absolute endpoint of the automatically generated
+penalty grid. The default is \code{0.001} when \code{n > p}, and \code{0.05}
+otherwise. This argument is a penalty value, not a ratio. In CV results,
+the field also named \code{lambda.min} instead denotes the selected penalty.}
 
-\item{nlambda}{The number of lambda values - default is \code{100}}
+\item{nlambda}{Number of automatically generated penalty values, an integer
+of at least 2. The default is \code{100}; ignored when \code{lambda} is supplied.}
 
-\item{eta}{is a preselected small positive threshold value. It is deleted \code{jth} variable to make the algorithm stable and also is excluded \code{jth} variable from the final model. Default is \code{1e-07}.}
+\item{eta}{Positive numerical tolerance, with default \code{1e-7}.
+Used for coefficient elimination and stopping on squared coefficient changes.}
 
-\item{converge}{is the value of converge. Defaults is \code{10^10}. In each iteration, it is calculated by sum of square the change in linear predictor for each coefficient. The algorithm iterates until \code{converge > eta}.}
+\item{converge}{Nonnegative initial convergence-distance value, retained for
+compatibility. The default is \code{1e10}. Iteration stops when the updated
+squared coefficient change is at most \code{eta}, or at the historical cap.}
 
-\item{num_threads}{Number of threads used for parallel computation over the folds,}
+\item{num_threads}{Requested fold-level workers, a positive integer.
+The default is \code{10}; the effective count is capped at \code{nfolds}.
+Builds without OpenMP execute folds sequentially. Use \code{rbridge_info()}
+to inspect the compiled support.}
 }
 \value{
-An object of class rbridge, a list with entries
-\item{cve}{the mean cross-validated error.}
-\item{cvse}{estimate of standard error of \code{cvm}.}
-\item{cvup}{upper curve = \code{cvm+cvsd}.}
-\item{cvlo}{lower curve = \code{cvm-cvsd}.}
-\item{lambda}{the values of \code{lambda} used in the fits}
-\item{nz}{number of non-zero coefficients at each \code{lambda}.}
-\item{betas}{estimated coefficient at each \code{lambda}.}
-\item{lambda.min}{value of lambda that gives minimum \code{cve}}
-\item{lambda.1se}{largest value of \code{lambda} such that error is within 1 standard error of the minimum}
+A list of class \code{cv.bridge} with components:
+\item{cve}{Numeric vector of validation mean squared errors, one per penalty.
+Squared holdout residuals are summed across folds and divided by the total
+observation count, so each observation has the same weight.}
+\item{cvse}{Numeric vector from the historical CV error-bar calculation.
+It is not the conventional standard error of foldwise mean squared errors.}
+\item{cvup, cvlo}{Upper and lower curves, computed as \code{cve + cvse}
+and \code{cve - cvse}.}
+\item{lambda}{Numeric penalty vector in fitted order.}
+\item{nz}{Number of nonzero slopes, excluding the intercept, in each full-data fit.}
+\item{betas}{Full-data coefficient matrix with \code{p + 1} rows and
+\code{length(lambda)} columns. The first row is \code{(Intercept)};
+the remaining rows are original-scale slopes in predictor order.}
+\item{lambda.min}{Fitted penalty with the smallest \code{cve}.
+Ties select the largest penalty among the minimizers. This selected value
+is distinct from the input argument specifying the generated grid endpoint.}
+\item{lambda.1se}{Largest fitted penalty whose \code{cve} is no greater
+than \code{cve + cvse} evaluated at the selected \code{lambda.min}.
+The name follows the historical convention; the threshold uses the
+package's \code{cvse} calculation described above.}
 }
 \description{
-Does k-fold cross-validation for bridge, produces a plot, and returns a value for lambda
+Evaluate a fitted penalty path using contiguous validation folds and return
+the full-data coefficients together with two penalty selectors.
 }
 \details{
-Computes bridge
+Fold assignment follows the supplied row order. The \code{nfolds}
+validation sets are contiguous blocks; their sizes can differ by one.
+Centering and RMS scaling use all observations before fold allocation,
+and each fold fit also reconstructs its training-set intercept.
+These historical preprocessing and error-bar conventions are retained.
+The reported validation error aggregates held-out predictions at each
+fitted penalty, and coefficients in \code{betas} come from a final fit
+to all observations.
+
+For one fixed penalty, let \eqn{K} be \code{nfolds}, \eqn{n} the total
+observation count, \eqn{I_k} the validation indices in fold \eqn{k},
+and \eqn{e_i} the held-out response residual for observation \eqn{i}.
+Equation (1) defines a fold's error contribution \eqn{d_k}, the pooled
+validation MSE, and the historical error-bar width:
+\deqn{
+\begin{aligned}
+d_k&=\frac{1}{n}\sum_{i\in I_k}e_i^2,\\
+\mathrm{cve}&=\sum_{k=1}^{K}d_k,\\
+\mathrm{cvse}&=\sqrt{\frac{1}{K(n-1)}
+\sum_{k=1}^{K}(d_k-\mathrm{cve})^2}. \qquad (1)
+\end{aligned}}
+The folds partition all observations, so the sum in Equation (1) weights
+each held-out observation equally. The final quantity supplies the plotted
+bar width and the historical \code{lambda.1se} threshold. Its centering
+uses the pooled \code{cve}, not the average fold contribution, and it is
+not a conventional foldwise standard error.
+
+\code{predict()} defaults to the minimum-error penalty \code{lambda.min}.
+\code{coef()} defaults to \code{lambda.1se}. Supply \code{s} explicitly
+to use the same penalty for both operations.
+Use \code{plot()} to inspect the curve, error bars and selected penalties.
 }
 \examples{
-set.seed(2019) 
+# Reproducible synthetic demonstration: 100 observations, eight predictors.
+set.seed(2019)
 beta <- c(3, 1.5, 0, 0, 2, 0, 0, 0)
 p <- length(beta)
 beta <- matrix(beta, nrow = p, ncol = 1)
+n <- 100
+X <- matrix(rnorm(n * p), nrow = n, ncol = p)
+y <- as.numeric(X \%*\% beta + rnorm(n))
 
-n = 100
-X = matrix(rnorm(n*p),n,p)
-y = X\%*\%beta + rnorm(n) 
-
-######## Model 1 
-model1 <- cv.bridge(X, y, q = 1)
-print(model1)
-coef(model1,s='lambda.min')
-predict(model1,newx=X[1:5,], s="lambda.min", type="response")
-predict(model1, s="lambda.min",type="coefficient")
-
-######## Model 2 
-model2 <- cv.bridge(X, y, q = 2)
-print(model2)
-coef(model2,s='lambda.min')
-predict(model2,newx=X[1:5,], s="lambda.min", type="response")
-predict(model2, s="lambda.min",type="coefficient")
-
+# Five penalties keep this help example fast; the default is 100.
+# Three contiguous folds and one worker keep this demonstration small.
+model1 <- cv.bridge(X, y, q = 1,
+                     nlambda = 5, nfolds = 3, num_threads = 1)
+model2 <- cv.bridge(X, y, q = 2,
+                     nlambda = 5, nfolds = 3, num_threads = 1)
+# Inspect both selectors and explicitly choose the minimum-error fit.
+c(minimum_error = model1$lambda.min, historical_1se = model1$lambda.1se)
+coef(model1, s = "lambda.min")
+predict(model1, newx = X[1:5, , drop = FALSE], s = "lambda.min")
+plot(model1)
 }
 \seealso{
-\code{\link{bridge}}
+\code{\link{bridge}}, \code{\link{plot.cv.bridge}}, \code{\link{coef.cv.bridge}}, \code{\link{predict.cv.bridge}}
 }
 \author{
-Bahadir Yuzbasi, Mohammad Arashi and Fikri Akdeniz \cr Maintainer: Bahadir Yuzbasi \email{b.yzb@hotmail.com}
+Bahadir Yuzbasi \cr Maintainer: Bahadir Yuzbasi \email{b.yzb@hotmail.com}
 }

@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Reproducibility and validation</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Reproducibility and validation</h1>
+
+
+
+<p>The 1.0.3 maintenance candidate starts from the CRAN 1.0.2 source
+archive, published on 2020-02-29. It repairs compatibility and interface
+errors while retaining the historical local quadratic approximation
+solver, initialization, lambda grid, contiguous CV folds, elimination
+threshold and iteration cap.</p>
+<p>The article is <a href="https://doi.org/10.1007/s00500-021-05763-9">Yuzbasi, Arashi and
+Akdeniz (2021)</a>. The published algorithm is described in Section 3.1.
+Package examples demonstrate the interfaces; they do not claim to
+reproduce the article’s tables or figures.</p>
+<div id="input-dictionary" class="section level2">
+<h2>Input dictionary</h2>
+<table>
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Input</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>X</code></td>
+<td>Numeric design matrix: rows are observations, columns are
+predictors</td>
+</tr>
+<tr class="even">
+<td><code>y</code></td>
+<td>Numeric response vector with one entry per observation</td>
+</tr>
+<tr class="odd">
+<td><code>q</code></td>
+<td>Positive bridge-penalty exponent, at most two</td>
+</tr>
+<tr class="even">
+<td><code>lambda</code></td>
+<td>Nonnegative fitted penalty grid</td>
+</tr>
+<tr class="odd">
+<td><code>R</code></td>
+<td>Restriction matrix with one column per standardized predictor</td>
+</tr>
+<tr class="even">
+<td><code>r</code></td>
+<td>Target vector or one-column matrix with one entry per
+restriction</td>
+</tr>
+<tr class="odd">
+<td><code>eta</code></td>
+<td>Historical elimination and squared coefficient-change threshold</td>
+</tr>
+<tr class="even">
+<td><code>converge</code></td>
+<td>Initial convergence-distance value</td>
+</tr>
+<tr class="odd">
+<td><code>nfolds</code></td>
+<td>Number of contiguous validation folds</td>
+</tr>
+<tr class="even">
+<td><code>num_threads</code></td>
+<td>Requested fold-level thread count when supported by the build</td>
+</tr>
+</tbody>
+</table>
+<p>Missing or nonfinite data, constant predictors and incompatible
+dimensions are rejected. The package does not impute missing values or
+silently remove constant predictors. Supply linearly independent
+restriction rows. The historical solver does not return iteration counts
+or a convergence certificate; validate a fitted path before substantive
+interpretation. Zero penalties are accepted only when the resulting
+linear systems can be resolved. Singular or numerically unresolved
+systems fail explicitly; no automatic pseudoinverse or approximate
+estimate is substituted.</p>
+</div>
+<div id="checking-restriction-scales" class="section level2">
+<h2>Checking restriction scales</h2>
+<p>The restriction defines linear combinations of standardized predictor
+slopes. The fitted intercept is excluded. To inspect the restriction
+residual, use the same column deviations as the solver. In this example
+<code>path</code> is a fitted restricted model; <code>X</code>,
+<code>R</code> and <code>r</code> are its supplied inputs.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>center <span class="ot">&lt;-</span> <span class="fu">colMeans</span>(X)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>scale <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">colMeans</span>(<span class="fu">sweep</span>(X, <span class="dv">2</span>, center, <span class="st">&quot;-&quot;</span>)<span class="sc">^</span><span class="dv">2</span>))</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>standardized_slopes <span class="ot">&lt;-</span> path<span class="sc">$</span>betas[<span class="sc">-</span><span class="dv">1</span>, , drop <span class="ot">=</span> <span class="cn">FALSE</span>] <span class="sc">*</span> scale</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>restriction_residual <span class="ot">&lt;-</span> <span class="fu">sweep</span>(R <span class="sc">%*%</span> standardized_slopes, <span class="dv">1</span>, <span class="fu">as.numeric</span>(r), <span class="st">&quot;-&quot;</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="fu">max</span>(<span class="fu">abs</span>(restriction_residual))</span></code></pre></div>
+<p>The calculated residual measures departure from each supplied
+standardized-scale restriction over the fitted path. Thresholding can
+affect residuals. This check does not certify convergence or global
+optimality.</p>
+</div>
+<div id="local-validation" class="section level2">
+<h2>Local validation</h2>
+<p>The maintenance tests exercise an independent ridge reference for
+<code>q = 2</code>, coefficient and prediction methods, restriction
+scales, small CV fits and invalid inputs. Use a single BLAS/OpenMP
+thread for reproducible small checks. The second-stage tests include 36
+frozen synthetic cases from the first maintenance candidate, with
+<code>q = 0.5, 1, 2</code>, ordinary, wide and correlated designs, and
+all four fitting interfaces. They compare coefficient paths, CV errors,
+selected penalties and support at the historical threshold. Independent
+constrained ridge and uneven-fold CV references provide additional
+checks. One- and two-thread requests are compared when supported by the
+installed build. These tests are regression checks, not a full
+simulation study or a proof of global optimality. Their frozen reference
+records its source-archive checksum, seed and R version without
+requiring the historical package at test time.</p>
+<p>From the directory containing a built source archive:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="va">OMP_NUM_THREADS</span><span class="op">=</span>1 <span class="va">OPENBLAS_NUM_THREADS</span><span class="op">=</span>1 <span class="va">VECLIB_MAXIMUM_THREADS</span><span class="op">=</span>1 <span class="dt">\</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="ex">R</span> CMD check <span class="at">--as-cran</span> rbridge_1.0.3.tar.gz</span></code></pre></div>
+<p>Record <code>sessionInfo()</code> and package versions with any study
+outputs. Examples use seed 2019. The repository’s published version and
+software environment should be recorded separately from any
+data-analysis configuration.</p>
+</div>
+<div id="performance-and-parallel-builds" class="section level2">
+<h2>Performance and parallel builds</h2>
+<p>Fixed cross-products are cached, active-set products are reused until
+the set changes, and the restricted solver shares a linear-system
+factorization across coefficient and restriction right-hand sides. CV
+reuses its training slices and calculates predictions for the path in
+one matrix multiplication. Roundoff can differ from the historical order
+of operations, so compatibility is checked numerically rather than
+asserted to be bit-for-bit on every platform.</p>
+<p><code>rbridge_info()</code> reports the actual compiled OpenMP
+capability. The build uses R’s portable OpenMP flags and falls back to
+sequential CV when those flags are empty. No additional OpenMP runtime
+is installed by the package. Worker errors are collected and reported
+after the workers finish. Set BLAS threads to one before starting R to
+avoid nested parallelism.</p>
+<p>The development workspace supplies a separate timing driver with
+frozen seeds, isolated engine processes, warmups, timing shards, resume
+checks and a SHA-256 manifest. This driver is development tooling and is
+not a runtime dependency of the package. Full timings require their
+numerical gates to pass before any speed claim. Small smoke timings
+establish executability only. Record the actual hardware and engine
+hashes and report the tested designs with any benchmark.</p>
+</div>
+<div id="completed-timing-evidence" class="section level2">
+<h2>Completed timing evidence</h2>
+<p>The completed timing protocol contains four synthetic designs: 80
+observations and 16 predictors; 300 and 60; 500 and 180; and a wide
+design with 60 observations and 120 predictors. The bridge-penalty
+exponent <code>q</code> takes values 0.5, 1 and 2. Each of the four
+interfaces uses the same seed 2019, 24 penalties and, where applicable,
+five contiguous CV folds. Each engine has two warmups and 15 timed fits
+per case, in an isolated R process. Startup and loading are
+excluded.</p>
+<p>The reference is the first repaired 1.0.3 candidate, identified by
+its engine hash. Both engines share the same unreleased version number.
+CV and BLAS use one thread, so these measurements assess serial engine
+optimization. All 96 shards and 48 comparisons pass the SHA-256,
+dimension and numerical gates. Coefficient/CV relative differences are
+at most 5.51e-14 and prediction differences at most 3.31e-15. Selected
+penalties, support at 1e-7 and reported variable counts are identical. A
+relative error divides the largest absolute difference by the greater of
+one and the largest reference magnitude.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Interface</th>
+<th align="right">Median of case speed ratios</th>
+<th align="right">Range</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>bridge()</code></td>
+<td align="right">3.14x</td>
+<td align="right">1.52-14.62x</td>
+</tr>
+<tr class="even">
+<td><code>rbridge()</code></td>
+<td align="right">2.59x</td>
+<td align="right">1.18-3.93x</td>
+</tr>
+<tr class="odd">
+<td><code>cv.bridge()</code></td>
+<td align="right">2.99x</td>
+<td align="right">1.31-13.00x</td>
+</tr>
+<tr class="even">
+<td><code>cv.rbridge()</code></td>
+<td align="right">2.57x</td>
+<td align="right">1.41-3.88x</td>
+</tr>
+</tbody>
+</table>
+<p>Each ratio divides the median baseline time by the median optimized
+time. Results apply to the recorded Apple M3 Pro, R 4.6.0 environment.
+They use one data seed and a fixed baseline-then-candidate order; engine
+order was not randomized across sessions. They do not measure accuracy,
+certify convergence, or compare directly with the original CRAN 1.0.2
+engine. The timer’s precision notice is retained in the provenance;
+solver warnings were treated as errors.</p>
+<p>Inspect the <a href="benchmarks/REPORT.txt">report</a>, <a href="benchmarks/comparison.tsv">case comparisons</a>, <a href="benchmarks/timings.tsv">raw timing repetitions</a> and <a href="benchmarks/provenance.json">protocol and environment</a>. The
+GitHub preparation includes the frozen historical driver and reference
+source for this recorded comparison. Its engine hashes depend on
+installed build contents; rebuilding on another platform establishes a
+new signature. The current development driver uses byte ordering for
+file hashes, making new signatures independent of the operating system’s
+collation setting. The completed historical run remains verifiable with
+its frozen driver and <code>LC_ALL=en_US.UTF-8</code>; changing that
+driver invalidates its recorded signature.</p>
+</div>
+<div id="reproducing-the-published-study" class="section level2">
+<h2>Reproducing the published study</h2>
+<p>The package source provides estimators and demonstrations. The
+original complete simulation and empirical reproduction drivers are not
+included in this source archive. A full reproduction requires the
+original datasets, configuration, seeds and scripts; neither the README
+demonstration nor a successful package check establishes agreement with
+the published results.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

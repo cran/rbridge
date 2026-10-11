@@ -2,46 +2,86 @@
 % Please edit documentation in R/methods.R
 \name{predict.cv.bridge}
 \alias{predict.cv.bridge}
-\title{Make predictions from a 'cv.bridge' object}
+\title{Predict from a fitted cv.bridge object}
 \usage{
-\method{predict}{cv.bridge}(object, newx, s = c("lambda.min",
-  "lambda.1se"), type = c("response", "nonzero", "coefficients"), ...)
+\method{predict}{cv.bridge}(
+  object,
+  newx,
+  s = c("lambda.min", "lambda.1se"),
+  type = c("response", "nonzero", "coefficients"),
+  ...
+)
 }
 \arguments{
-\item{object}{A 'cv.bridge' object.}
+\item{object}{Fitted object returned by \code{\link{cv.bridge}}, with \code{p} predictors in its training design.}
 
-\item{newx}{Matrix of new values for x at which predictions are to be made.}
+\item{newx}{Numeric matrix with one row per new observation and the
+same \code{p} columns, in the same order, as the training design.
+A numeric vector of length \code{p} represents one observation.
+Values are supplied on the original predictor scale. Required only for
+\code{type = "response"}.}
 
-\item{s}{Value(s) of the penalty parameter lambda at which predictions are required.}
+\item{s}{Penalty selection, using numeric fitted values or a character name.
+Numeric values must match \code{object$lambda} exactly; no interpolation is used.
+The character selectors are:
+\describe{
+\item{\code{"lambda.min"}}{Select the penalty with minimum CV error.}
+\item{\code{"lambda.1se"}}{Select using the historical CV error bars.}
+}
+The default is \code{lambda.min}.}
 
-\item{type}{It should one of "response", "nonzero" or "coefficients". The "response" is for predicted values, the "nonzero" is for exacting non-zero coefficients and the "coefficients" is for the estimated coefficients.}
+\item{type}{Output to return: \code{"response"} for fitted response values,
+\code{"coefficients"} for intercept and slopes, or \code{"nonzero"}
+for predictor indices over the entire fitted path.}
 
-\item{...}{Additional arguments for compatibility.}
+\item{...}{Additional arguments accepted for compatibility.}
 }
 \value{
-Among a matrix with predictions, a vector non-zero indexing or a vector of coefficients
+For \code{type = "response"}, a numeric vector for one
+selected penalty or a matrix with one row per new observation and one
+column per selected penalty. For \code{type = "coefficients"}, a numeric
+matrix with \code{p + 1} rows, including the intercept, even for one penalty.
+For \code{type = "nonzero"}, a pathwise collection of 1-based predictor
+indices excluding the intercept. Its historical container can simplify
+depending on the support pattern and number of predictors.
 }
 \description{
-Makes predictions from a cross-validated 'cv.bridge' model
+Compute response predictions, extract coefficients, or identify nonzero
+predictors from a fitted cv.bridge object.
+}
+\details{
+Prediction uses the fitted intercept and original-scale slopes.
+Columns of \code{newx} are matched by position, not reordered by their names.
+For \code{type = "nonzero"}, all fitted penalties are inspected and
+\code{s} does not restrict the returned indices.
+The defaults differ between \code{coef()} and \code{predict()}:
+coefficient extraction uses \code{lambda.1se}, whereas response prediction
+uses \code{lambda.min}. Specify the same \code{s} in both calls when comparing
+coefficients and their predictions.
 }
 \examples{
-set.seed(2019) 
+# Reproducible synthetic demonstration: 100 observations, eight predictors.
+set.seed(2019)
 beta <- c(3, 1.5, 0, 0, 2, 0, 0, 0)
 p <- length(beta)
 beta <- matrix(beta, nrow = p, ncol = 1)
+n <- 100
+X <- matrix(rnorm(n * p), nrow = n, ncol = p)
+y <- as.numeric(X \%*\% beta + rnorm(n))
 
-n = 100
-X = matrix(rnorm(n*p),n,p)
-y = X\%*\%beta + rnorm(n) 
-
-model1 <- cv.bridge(X, y, q = 1)
-coef(model1,s='lambda.min')
-predict(model1,newx=X[1:5,], s="lambda.min", type="response")
-predict(model1, s="lambda.min",type="coefficient")
+# Five penalties keep this help example fast; the default is 100.
+model1 <- cv.bridge(X, y, q = 1, nlambda = 5,
+                     nfolds = 3, num_threads = 1)
+# Predict five observations at one explicitly selected penalty.
+predict(model1, newx = X[1:5, , drop = FALSE], s = "lambda.min")
+# Extract coefficients using the complete type name.
+predict(model1, s = "lambda.min", type = "coefficients")
+# Predictor indices for every fitted penalty; the intercept is excluded.
+predict(model1, type = "nonzero")
 }
 \seealso{
-\code{\link{coef.cv.bridge}}
+\code{\link{coef.cv.bridge}}, \code{\link{cv.bridge}}
 }
 \author{
-Bahadir Yuzbasi, Mohammad Arashi and Fikri Akdeniz \cr Maintainer: Bahadir Yuzbasi \email{b.yzb@hotmail.com}
+Bahadir Yuzbasi \cr Maintainer: Bahadir Yuzbasi \email{b.yzb@hotmail.com}
 }

@@ -2,39 +2,57 @@
 % Please edit documentation in R/methods.R
 \name{coef.bridge}
 \alias{coef.bridge}
-\title{Extract coefficients from a 'bridge' object}
+\title{Extract coefficients from a fitted bridge object}
 \usage{
 \method{coef}{bridge}(object, s = c("lambda.1se", "lambda.min"), ...)
 }
 \arguments{
-\item{object}{A 'bridge' object.}
+\item{object}{Fitted object returned by \code{\link{bridge}}, with \code{p} predictors in its training design.}
 
-\item{s}{Value(s) of the penalty parameter lambda at which predictions are required.}
+\item{s}{Numeric fitted penalty value(s).
+Values must match \code{object$lambda} exactly; no interpolation is used.
+Omitting this argument returns all fitted penalties.
 
-\item{...}{Additional arguments for compatibility.}
+The character selector \code{lambda.min} requests the smallest fitted
+penalty. Use a CV object for the selector \code{lambda.1se}.}
+
+\item{...}{Additional arguments accepted for compatibility.}
 }
 \value{
-A vector of coefficients
+Numeric matrix with \code{p + 1} rows and one column per
+selected penalty, even when only one penalty is selected. The first row
+is \code{(Intercept)}; subsequent rows are original-scale slopes in the
+training predictor order.
 }
 \description{
-Extract coefficients from a 'bridge' object.
+Extract original-scale intercept and slope coefficients from a fitted
+bridge object.
+}
+\details{
+The returned matrix retains its dimensions for a single selected penalty.
 }
 \examples{
-set.seed(2019) 
+# Reproducible synthetic demonstration: 100 observations, eight predictors.
+set.seed(2019)
 beta <- c(3, 1.5, 0, 0, 2, 0, 0, 0)
 p <- length(beta)
 beta <- matrix(beta, nrow = p, ncol = 1)
+n <- 100
+X <- matrix(rnorm(n * p), nrow = n, ncol = p)
+y <- as.numeric(X \%*\% beta + rnorm(n))
 
-n = 100
-X = matrix(rnorm(n*p),n,p)
-y = X\%*\%beta + rnorm(n) 
-
-model1 <- bridge(X, y, q = 1)
-coef(model1,s='lambda.min')
+# Five penalties keep this help example fast; the default is 100.
+model1 <- bridge(X, y, q = 1, nlambda = 5)
+# A single selected penalty still gives a coefficient matrix.
+coefficients <- coef(model1, s = model1$lambda[2])
+coefficients
+dim(coefficients)
+# Omitting s extracts the full fitted coefficient path.
+dim(coef(model1))
 }
 \seealso{
-\code{\link{predict.bridge}}
+\code{\link{predict.bridge}}, \code{\link{bridge}}
 }
 \author{
-Bahadir Yuzbasi, Mohammad Arashi and Fikri Akdeniz \cr Maintainer: Bahadir Yuzbasi \email{b.yzb@hotmail.com}
+Bahadir Yuzbasi \cr Maintainer: Bahadir Yuzbasi \email{b.yzb@hotmail.com}
 }

@@ -2,61 +2,114 @@
 % Please edit documentation in R/bridge.R
 \name{bridge}
 \alias{bridge}
-\title{Fit a Bridge Estimation}
+\title{Fit a bridge coefficient path}
 \usage{
-bridge(X, y, q = 1, lambda.min = ifelse(n > p, 0.001, 0.05),
-  nlambda = 100, lambda, eta = 1e-07, converge = 10^10)
+bridge(
+  X,
+  y,
+  q = 1,
+  lambda.min = ifelse(n > p, 0.001, 0.05),
+  nlambda = 100,
+  lambda,
+  eta = 1e-07,
+  converge = 10^10
+)
 }
 \arguments{
-\item{X}{Design matrix.}
+\item{X}{Numeric design matrix with \code{n} observation rows and \code{p}
+predictor columns. Supply finite values and predictors with nonzero variation;
+omit an intercept column. A data frame is converted using \code{model.matrix(~0+., X)};
+restrictions and future predictions must use the resulting predictor order.}
 
-\item{y}{Response vector.}
+\item{y}{Numeric response vector of length \code{n}, containing finite values.}
 
-\item{q}{is the degree of norm which includes ridge regression with \code{q=2} and lasso estimates with \code{q=1} as special cases}
+\item{q}{Bridge-penalty exponent, a finite number in \code{(0, 2]}.
+Values 1 and 2 specify the L1 and L2 penalty forms. Estimation uses local
+quadratic approximation (LQA).}
 
-\item{lambda.min}{The smallest value for lambda if \code{n>p} is \code{0.001} and \code{0.05} otherwise.}
+\item{lambda.min}{Positive absolute endpoint of the automatically generated
+penalty grid. The default is \code{0.001} when \code{n > p}, and \code{0.05}
+otherwise. This argument is a penalty value, not a ratio. In CV results,
+the field also named \code{lambda.min} instead denotes the selected penalty.}
 
-\item{nlambda}{The number of lambda values - default is \code{100}}
+\item{nlambda}{Number of automatically generated penalty values, an integer
+of at least 2. The default is \code{100}; ignored when \code{lambda} is supplied.}
 
-\item{lambda}{A user supplied lambda sequence. By default, the program compute a squence of values the length of nlambda.}
+\item{lambda}{Optional nonempty numeric vector of finite, nonnegative penalty
+values. Its order is retained. When supplied, it determines the fitted path
+and overrides \code{nlambda} and the grid argument \code{lambda.min}.}
 
-\item{eta}{is a preselected small positive threshold value. It is deleted \code{jth} variable to make the algorithm stable and also is excluded \code{jth} variable from the final model. Default is \code{1e-07}.}
+\item{eta}{Positive numerical tolerance, with default \code{1e-7}.
+Used for coefficient elimination and stopping on squared coefficient changes.}
 
-\item{converge}{is the value of converge. Defaults is \code{10^10}. In each iteration, it is calculated by sum of square the change in linear predictor for each coefficient. The algorithm iterates until \code{converge > eta}.}
+\item{converge}{Nonnegative initial convergence-distance value, retained for
+compatibility. The default is \code{1e10}. Iteration stops when the updated
+squared coefficient change is at most \code{eta}, or at the historical cap.}
 }
 \value{
-An object of class rbridge, a list with entries
-\item{betas}{Coefficients computed over the path of lambda}
-\item{lambda}{The lambda values which is given at the function}
+A list of class \code{bridge} with components:
+\item{betas}{Numeric coefficient matrix with \code{p + 1} rows and
+\code{length(lambda)} columns, one column per fitted penalty.
+The first row is \code{(Intercept)}; the remaining rows are original-scale
+slopes in predictor order. Column names identify the fitted penalties.}
+\item{lambda}{Numeric vector of penalties, in fitted column order.}
 }
 \description{
-Fit a bridge penalized maximum likelihood.
-It is computed the regularization path which is consisted of \code{lasso} or \code{ridge} penalty 
-at the a grid values for \code{lambda}
+Fit a bridge-penalized least-squares path using local quadratic approximation.
 }
 \details{
-Computes bridge estimation
+Predictors are centered and divided by their centered root-mean-square
+(RMS) deviations, using the observation count \code{n} as the divisor.
+The response is centered. The intercept is reconstructed after fitting,
+and returned coefficients are expressed on the original predictor scale.
+The generated penalties are logarithmically spaced between an internally
+computed starting value and the absolute endpoint \code{lambda.min}.
+
+Let \eqn{Z} be the \eqn{n} by \eqn{p} centered, RMS-standardized
+design, \eqn{y_c} the centered response vector of length \eqn{n}, and
+\eqn{b} the \eqn{p}-dimensional standardized slope vector.
+For exponent \eqn{q \in (0,2]} and penalty weight \eqn{\lambda \ge 0},
+Equation (1) defines the penalized least-squares target:
+\deqn{\min_{b}
+\left\{\|y_c-Zb\|_2^2+\lambda\sum_{j=1}^{p}|b_j|^q\right\}. \qquad (1)}
+In Equation (1), \eqn{\|\cdot\|_2^2} is the squared Euclidean norm,
+so its first term is the unnormalized residual sum of squares.
+The index \eqn{j} runs over the predictors; the second term is the bridge
+penalty, with \eqn{\lambda} controlling its weight relative to residual error.
+
+The fitting routine applies the article's LQA updates, coefficient elimination
+and stopping rules. The criterion is nonconvex when \eqn{q < 1}, so the
+iterative result is not a guarantee of a global minimum. The getting-started
+vignette explains the penalty geometry and the fixed-LQA restriction correction.
 }
 \examples{
-set.seed(2019) 
+# Reproducible synthetic demonstration: 100 observations, eight predictors.
+set.seed(2019)
 beta <- c(3, 1.5, 0, 0, 2, 0, 0, 0)
 p <- length(beta)
 beta <- matrix(beta, nrow = p, ncol = 1)
+n <- 100
+X <- matrix(rnorm(n * p), nrow = n, ncol = p)
+y <- as.numeric(X \%*\% beta + rnorm(n))
 
-n = 100
-X = matrix(rnorm(n*p),n,p)
-y = X\%*\%beta + rnorm(n) 
-
-model1 <- bridge(X, y, q = 1)
-print(model1)
-
-model2 <- bridge(X, y, q = 2)
-print(model2)
-
+# Five penalties keep this help example fast; the default is 100.
+# L1 and L2 penalty forms on the same observations.
+model1 <- bridge(X, y, q = 1, nlambda = 5)
+model2 <- bridge(X, y, q = 2, nlambda = 5)
+dim(model1$betas)
+# Extract one fitted column and predict five observations.
+selected <- model1$lambda[2]
+coef(model1, s = selected)
+predict(model1, newx = X[1:5, , drop = FALSE], s = selected)
+}
+\references{
+Yuzbasi, B., Arashi, M. and Akdeniz, F. (2021).
+Penalized regression via the restricted bridge estimator.
+Soft Computing, 25, 8401--8416. \doi{10.1007/s00500-021-05763-9}.
 }
 \seealso{
-\code{\link{cv.bridge}}
+\code{\link{cv.bridge}}, \code{\link{coef.bridge}}, \code{\link{predict.bridge}}
 }
 \author{
-Bahadir Yuzbasi, Mohammad Arashi and Fikri Akdeniz \cr Maintainer: Bahadir Yuzbasi \email{b.yzb@hotmail.com}
+Bahadir Yuzbasi \cr Maintainer: Bahadir Yuzbasi \email{b.yzb@hotmail.com}
 }

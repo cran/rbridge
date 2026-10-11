@@ -5,6 +5,10 @@ standard <- function(x) {
     .Call(`_rbridge_standard`, x)
 }
 
+Engine_Info <- function() {
+    .Call(`_rbridge_Engine_Info`)
+}
+
 BetaIntial <- function(x, y, lambda) {
     .Call(`_rbridge_BetaIntial`, x, y, lambda)
 }
