@@ -1,8 +1,8 @@
 Package: rbridge
 Type: Package
 Title: Restricted Bridge Estimation
-Version: 1.0.3
-Date: 2026-10-10
+Version: 1.0.4
+Date: 2026-10-12
 Authors@R: c(
     person("Bahadir", "Yuzbasi", role = c("aut", "cre"),
            email = "b.yzb@hotmail.com"),
@@ -30,7 +30,7 @@ NeedsCompilation: yes
 URL: https://byuzbasi.github.io/rbridge/,
         https://github.com/byuzbasi/rbridge
 BugReports: https://github.com/byuzbasi/rbridge/issues
-Packaged: 2026-10-11 18:22:33 UTC; Bahadir Yuzbasi
+Packaged: 2026-10-12 07:38:06 UTC; Bahadir Yuzbasi
 Author: Bahadir Yuzbasi [aut, cre],
   Mohammad Arashi [aut],
   Fikri Akdeniz [aut],
@@ -39,4 +39,4 @@ Author: Bahadir Yuzbasi [aut, cre],
   Robert Tibshirani [ctb] (Utility functions adapted from glmnet)
 Maintainer: Bahadir Yuzbasi <b.yzb@hotmail.com>
 Repository: CRAN
-Date/Publication: 2026-10-11 22:30:19 UTC
+Date/Publication: 2026-10-13 08:30:08 UTC

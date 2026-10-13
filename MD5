@@ -1,6 +1,6 @@
-c97b351ddfa088e90ae7cabc10cb5219 *DESCRIPTION
+232977fd61f71e58c4be2c7d5f2ec5e6 *DESCRIPTION
 b0f5a3bec275a2501a7e93864514034c *NAMESPACE
-eaa40f71dc98f4580712916feb05b373 *NEWS.md
+c11a20554edade8c3728b7125d096896 *NEWS.md
 a0af8b1ba25d60bb66eb6729e2004cf3 *R/RcppExports.R
 2013e987bcd9c08b8fc79c44e5facaed *R/bridge.R
 9927b9334f3c227a9ab08b3cb8451a74 *R/cv.bridge.R
@@ -9,7 +9,7 @@ a0af8b1ba25d60bb66eb6729e2004cf3 *R/RcppExports.R
 3dc3974b450ac530a92bafa7292b4612 *R/rbridge.R
 c699fcc883752a0aefb67a1601672fa9 *R/rbridge_info.R
 0da25c6c4ca4c424b570f27f08ff7925 *R/utilities.R
-3737888a29f16d313bafeaafa69dc12c *README.md
+bbf8744ef0cbc266ff11dc2da0821c4e *README.md
 533839446f70bde34a1050627ce80586 *build/partial.rdb
 b3517341e954497bb1e1ee7ef41666b9 *build/vignette.rds
 02ac34b06d2929576dfee7a7d77a4c0c *inst/CITATION
@@ -25,7 +25,7 @@ d8d3cf021443b0a3df34d5568f808f42 *inst/doc/benchmarks/summary-design.tsv
 e30d808359713077c9341214a3732967 *inst/doc/benchmarks/timings.tsv
 22cc6d84ed4ae3c44b90d99d7ad249b9 *inst/doc/getting-started.R
 cfb257465bf90559de60fc746cc6b569 *inst/doc/getting-started.Rmd
-52e077cda2d9b150d4fbbe255dc90321 *inst/doc/getting-started.html
+326a0ad4b32e7b119e7b0733808ac3f5 *inst/doc/getting-started.html
 831e3c46437b7d41f909f54f00df9bdf *inst/doc/reproducibility.R
 067a2419de0d0c73b119847d16c6440c *inst/doc/reproducibility.Rmd
 c601a465b1d0410301efe2cc72bd8029 *inst/doc/reproducibility.html
@@ -49,9 +49,9 @@ bb20b2d2925463c27d6e16db5167ec2b *man/predict.cv.bridge.Rd
 af5f9c65dfe2308652b09a5f6dd23628 *man/predict.rbridge.Rd
 937eae5dec007037b62d8dac46433732 *man/rbridge.Rd
 2a16dec3288718722a25a9ef8f160733 *man/rbridge_info.Rd
-b37bc497134f52b61ab7a56b3e9d98d3 *src/Main_functions.cpp
-f7776270f024cc0c7407c86e50480797 *src/Makevars
-5e4882d0c6482007e5e85b91714a1171 *src/Makevars.win
+c50387454e82c02c7bb65e03b3308213 *src/Main_functions.cpp
+a08cb4e6e4d960a84190138e0bd0a219 *src/Makevars
+a9270b68ddc6ea9ef3d6583802902aa1 *src/Makevars.win
 ca0dbbb1884992346034704c940e246e *src/RcppExports.cpp
 277291ee4833920b625deecca24f7600 *tests/testthat.R
 cdd8f50edfdf0af028b2c9ff3d6eba55 *tests/testthat/fixtures/maintenance-reference.rds
